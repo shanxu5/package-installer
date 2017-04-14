@@ -20,8 +20,18 @@ module.exports = {
         // variable to keep track of handled dependencies output
         var current_handled_dependencies = [];
 
+        var packageStack = [];
+
         // handle dependencies
         var handleDependencies = function(package) {
+            // check to see if cyclical
+            if (packageStack.indexOf(package) != -1) {
+                packageStack.push(package);
+                throw "Error, cyclical dependency found | " + packageStack;
+            }
+            // add package to a stack
+            packageStack.push(package);
+            console.log('packageStack ', packageStack);
             // check to see if it's already handled
             if( -1 == current_handled_dependencies.indexOf(package)) {
                 if (parsedInput[package] && parsedInput[package].length) {
@@ -31,16 +41,20 @@ module.exports = {
                 }
                 current_handled_dependencies.push(package);
             }
-
+            packageStack.pop();
         };
 
         // loop through the parsed input and call handleDependencies function to handle dependencies
-        Object.keys(parsedInput).forEach(function(package){
-            handleDependencies(package);
-        });
-
-        console.log('current_handled_dependencies ', current_handled_dependencies);
-        // join the final output array to a comma separated string
-        return current_handled_dependencies.join(', ');
+        try {
+            Object.keys(parsedInput).forEach(function(package){
+                handleDependencies(package);
+            });
+             console.log('current_handled_dependencies ', current_handled_dependencies);
+            // join the final output array to a comma separated string
+            return current_handled_dependencies.join(', ');
+        } catch (e) {
+            console.log('error ' + e);
+            return e;
+        }
     }
 };
